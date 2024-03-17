@@ -1,6 +1,6 @@
-import { IResponse } from '../../../shared'
+import { IResponseFact } from '../../../shared'
 
-export async function getFact(): Promise<IResponse> {
+export async function getFact(): Promise<IResponseFact> {
 
 	const response = await fetch('https://catfact.ninja/fact')
 	if (!response.ok) {

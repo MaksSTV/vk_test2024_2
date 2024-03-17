@@ -1,59 +1,85 @@
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useAgeQuery } from '../hooks/useAgeQuery'
+import { useQueryClient } from '@tanstack/react-query'
 
 function AgeForm() {
 	const [name, setName] = useState('')
-	const [age, setAge] = useState('')
-	const [prevQuery, setPrevQuery] = useState('')
-	const timerRef = useRef(0)
+	const [prevName, setPrevName] = useState('')
+	const [age, setAge] = useState<number | null>(null)
+	const [timerId, setTimerId] = useState<number | null>(null)
+	const { isLoading, data, error, refetch } = useAgeQuery(name)
 
-	const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const newName = event.target.value
-		setName(newName)
-		// Отменяем предыдущий таймер, если он был установлен
-		if (timerRef.current !== null) {
-			clearTimeout(timerRef.current)
-		}
-		// Устанавливаем новый таймер для отправки запроса через 3 секунды после ввода имени
-		timerRef.current = setTimeout(() => {
-			fetchAge(newName)
-		}, 3000)
-	}
+	const queryClient = useQueryClient()
 
-	const handleSubmit = (event: React.FormEvent) => {
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		fetchAge(name)
-	}
-
-	const fetchAge = async (newName: string) => {
-		// Проверяем, не отправляли ли уже запрос с таким именем
-		console.log(prevQuery, newName)
-		if (newName === prevQuery || newName === '') {
+		const form = event.currentTarget
+		const inputValue = (form.elements as any)['inputName'].value
+		if (inputValue == prevName) {
 			return
 		}
-		setPrevQuery(newName)
-		try {
-			const response = await fetch(`https://api.agify.io/?name=${newName}`)
-			if (!response.ok) {
-				throw new Error('Failed to fetch age')
-			}
-			const data = await response.json()
-			setAge(data.age)
-		} catch (error) {
-			console.error('Error fetching age:', error)
+		if (timerId) {
+			clearTimeout(timerId)
 		}
+		setName(inputValue)
+		queryClient.cancelQueries({ queryKey: ['age', prevName] })
+		refetch()
+		setPrevName(inputValue)
 	}
 
+	const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+		const newName = event.target.value
+		if (newName !== '' && !newName.match(/^[A-Za-z]+$/)) {
+			return
+		}
+		setName(newName)
+		if (timerId) {
+			clearTimeout(timerId)
+		}
+		const newTimerId = setTimeout(() => {
+
+			if (newName == prevName || newName === '') {
+				return
+			}
+
+			setName(newName)
+			queryClient.cancelQueries({ queryKey: ['age', prevName] })
+			refetch()
+			setPrevName(newName)
+		}, 3000)
+		setTimerId(newTimerId)
+	}
+
+	useEffect(() => {
+		if (!isLoading && data) {
+			setAge(data.age)
+		}
+		if (error) {
+			console.error('Error fetching age:', error)
+		}
+	}, [isLoading, data, error])
+
 	return (
-		<>
+		<div>
 			<form onSubmit={handleSubmit}>
 				<label>
 					Имя:
-					<input type="text" value={name} onChange={handleNameChange} />
+					<input
+						name="inputName"
+						type="text"
+						value={name}
+						onChange={handleNameChange}
+					/>
 				</label>
-				<button type="submit" disabled={name === ''} >Получить возраст</button>
+				<button
+					type="submit"
+					disabled={name === ''}>
+					Получить
+				</button>
 			</form>
 			{age && <div>Возраст: {age}</div>}
-		</>
+		</div>
 	)
 }
 

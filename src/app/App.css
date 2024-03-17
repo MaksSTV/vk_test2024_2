@@ -49,3 +49,9 @@
 .facts > input {
 	max-width: 300px;
 }
+
+.age__form {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { getFact } from '../api'
+import { useFactQuery } from '../hooks/useFactQuery'
 
 function FactsForm() {
 
 	const [fact, setFact] = useState('')
 	const [selection, setSelection] = useState({ start: 1, end: 1 })
 
+	const { isLoading, data, error, refetch } = useFactQuery()
 
 	useEffect(() => {
 		const textField = document.getElementById('factField') as HTMLTextAreaElement
@@ -15,17 +16,22 @@ function FactsForm() {
 		textField.setSelectionRange(start, end)
 	}, [selection])
 
-
-
 	const getNewFact = () => {
-		getFact().then(res => {
-			setFact(res.fact)
+		refetch()
+	}
+
+	useEffect(() => {
+		if (!isLoading && data) {
+			setFact(data.fact)
 			const textField = document.getElementById('factField') as HTMLTextAreaElement
 			if (textField) {
 				setSelection({ start: 1, end: 1 })
 			}
-		})
-	}
+		}
+		if (error) {
+			console.error('Error fetching age:', error)
+		}
+	}, [isLoading, data, error])
 
 	return (
 		<>

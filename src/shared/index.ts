@@ -1,4 +1,4 @@
-import { IResponse } from './types/shared.types'
+import { IResponseFact, IResponseAge } from './types/shared.types'
 
 
-export type { IResponse }
+export type { IResponseFact, IResponseAge }
