@@ -33,7 +33,7 @@ function FactsForm() {
 			<textarea
 				id="factField"
 				value={fact}
-
+				onChange={(e) => setFact(e.target.value)}
 				style={{
 					width: 'auto',
 					height: '100px'
